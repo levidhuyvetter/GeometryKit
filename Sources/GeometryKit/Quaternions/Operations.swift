@@ -52,12 +52,21 @@ public extension QuaternionProtocol {
         return Self.init(x: x, y: y, z: z, w: w)
     }
     
-    func deconstructed(vector v:(x:FP, y:FP, z:FP)) -> (twist:Self, swing:Self) {
+    static func *(l:Self, r:Self) -> Self {
+        return l.multiplied(by: r)
+    }
+    
+    func decomposed(vector v:(x:FP, y:FP, z:FP)) -> (twist:Self, swing:Self) {
         let d = simd_normalize(simd_double3(x: v.x.double, y: v.y.double, z: v.z.double))
         let ra = simd_double3(x: self.x.double, y: self.y.double, z: self.z.double)
+        let dot = simd_dot(d, ra)
         let p = simd_project(ra, d)
         let twist = Self.init(x: FP(p.x), y: FP(p.y), z: FP(p.z), w: self.w).normalised
         let swing = self.multiplied(by: twist.inversed)
+        
+        if dot < 0 {
+            return (twist.negated, swing)
+        }
         
         return (twist, swing)
     }
